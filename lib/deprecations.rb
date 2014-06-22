@@ -6,29 +6,29 @@ module Deprecations
 
   class << self
 
-    def call(context, alternative, outdated)
+    def call(subject, alternative, outdated)
       case configuration.behavior
       when :warn
-        warn(context, alternative, outdated)
+        warn(subject, alternative, outdated)
       when :throw
-        throw!(context, alternative)
+        throw!(subject, alternative)
       end
       self
     end
 
     private
 
-    def throw!(context, alternative)
-      msg = "`#{context}` is deprecated"
+    def throw!(subject, alternative)
+      msg = "`#{subject}` is deprecated"
       alternative and msg << " - use #{alternative} instead"
       ex = DeprecationError.new(msg)
       ex.set_backtrace(caller(3))
       raise(ex)
     end
 
-    def warn(context, alternative, outdated)
+    def warn(subject, alternative, outdated)
       location = ::Kernel.caller_locations(3,1).last and location = "#{location.path}:#{location.lineno}: "
-      msg = "#{location}[DEPRECATION] `#{context}` is deprecated"
+      msg = "#{location}[DEPRECATION] `#{subject}` is deprecated"
       msg << (outdated ? " and will be outdated #{outdated}." : '.')
       alternative and msg << " Please use `#{alternative}` instead."
       ::Kernel.warn(msg)
