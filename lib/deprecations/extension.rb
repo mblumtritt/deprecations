@@ -18,7 +18,7 @@ module Deprecations
       end
 
       def __define_deprecated(opts)
-        alias_name = "__deprecated__#{opts[:name]}__"
+        alias_name = "deprecated_#{opts[:name]}"
         private_method_defined?(alias_name) and raise(
           ScriptError, "method is already deprecated - #{opts[:decorated]}"
         )
