@@ -32,18 +32,47 @@ After adding the gem to your project
 require 'deprecations'
 ```
 
-you can specify which methods and classes are deprecated. Whenever a deprecated method or class will be used a warning about it's deprecation will be given, containing the information about the calling source.
+you can specify which methods and classes are deprecated. To mark a method as deprecated is quite easy:
 
-### Sample - Deprecated Method:
 ```ruby
-Deprecations.deprecate(Foo, :foo, :bar)
+class MySample
+
+  def clear
+    # something here
+  end
+
+  def clean
+    clear
+  end
+  deprecate :clean, :clear, 'next version'
+
+end
 ```
 
-Calling method `Foo#foo` will display a warning about it's deprecation. A suggestion to use method `Foo#bar` instead will be included. When `foo` is a class method this will work too (`Foo::foo` is deprecated then).
+Whenever the method `MySample#clean` is called this warning appears:
 
-### Sample - Deprecated Class:
+> [DEPRECATION] `MySample#clean` is deprecated and will be outdated next version. Please use `MySample#clear` instead.
+
+You can change this behavior by configure the Deprecations gem:
+
 ```ruby
-Deprecations.deprecate(Foo, Bar)
+Deprecations.configure do |config|
+  config.behavior = :raise
+end
 ```
 
-Whenever `Foo` is instantiated a warning about it's deprecation will be displayed and using class `Bar` instead will be suggested.
+Valid behaviors are:
+
+- `:raise` will raise an `DeprecationException` when a deprecated method is called
+- `:silence` will do nothing
+- `:warn` will print a warning (default behavior)
+
+Marking a complete class as deprecated will present the deprecation warning (or exception) whenever this class is instantiated:
+
+```ruby
+class MySample
+  deprecated!
+  
+  # some more code here...
+end
+```
