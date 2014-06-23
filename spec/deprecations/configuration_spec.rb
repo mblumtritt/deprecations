@@ -3,9 +3,9 @@ require 'spec_helper'
 RSpec.describe 'Deprecations::Configuration' do
   it 'is possible to configure the module' do
     Deprecations.configure do |config|
-      config.behavior = :silent
+      config.behavior = :silence
     end
-    expect(Deprecations.configuration.behavior).to be :silent
+    expect(Deprecations.configuration.behavior).to be :silence
   end
 
   context 'when invalid arguments are given' do

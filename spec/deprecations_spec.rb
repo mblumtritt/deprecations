@@ -169,7 +169,7 @@ end
 RSpec.describe Deprecations do
   context 'when configured as silent' do
     before :all do
-      Deprecations.configuration.behavior = :silent
+      Deprecations.configuration.behavior = :silence
     end
 
     context 'when an instance method is marked as deprecated' do
