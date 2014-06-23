@@ -10,7 +10,7 @@ module Deprecations
       case configuration.behavior
       when :warn
         warn(subject, alternative, outdated)
-      when :throw
+      when :raise
         throw!(subject, alternative)
       end
       self

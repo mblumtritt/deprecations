@@ -10,7 +10,7 @@ module Deprecations
       @@cfg
     end
 
-    BEHAVIORS = [:warn, :throw, :ignore].freeze
+    BEHAVIORS = [:warn, :raise, :silent].freeze
 
     private
 
