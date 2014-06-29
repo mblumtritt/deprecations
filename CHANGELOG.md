@@ -1,2 +1,2 @@
-### deprecations 0.0.2
+### deprecations 1.0.0
 - initial release
