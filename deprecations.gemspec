@@ -18,7 +18,7 @@ GemSpec= Gem::Specification.new do |spec|
   spec.extra_rdoc_files = %w[README.md]
   spec.has_rdoc = false # TODO!
   spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rspec', '>= 3.0.0'
   spec.add_development_dependency 'guard'
   spec.add_development_dependency 'guard-rspec'
   if /darwin|mac os/i =~ RUBY_PLATFORM
