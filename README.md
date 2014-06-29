@@ -76,3 +76,5 @@ class MySample
   # some more code here...
 end
 ```
+
+Please have a look at the [specs](https://github.com/mblumtritt/deprecations/blob/master/spec/deprecations_spec.rb) for detailed information and more samples.
