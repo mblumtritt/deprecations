@@ -2,6 +2,8 @@
 
 This gem provides transparent declaration of deprecated methods and classes.
 
+[![Code Climate](https://codeclimate.com/github/mblumtritt/deprecations.png)](https://codeclimate.com/github/mblumtritt/deprecations)
+
 ## Installation
 
 The simplest way to install Deprecations gem is to use [Bundler](http://gembundler.com/).
