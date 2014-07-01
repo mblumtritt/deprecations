@@ -17,19 +17,22 @@ module Deprecations
         nil
       end
 
-      def __define_deprecated(opts)
-        alias_name = "deprecated_#{opts[:name]}"
-        private_method_defined?(alias_name) and raise(
-          ScriptError, "method is already deprecated - #{opts[:decorated]}"
-        )
-        alias_method(alias_name, opts[:name])
-        private(alias_name)
-        define_method(opts[:name]) do |*a, &b|
-          Deprecations.call(opts[:decorated], opts[:alternative], opts[:outdated])
+      def __define_deprecated(name, decorated_name, scope, alternative, outdated)
+        alias_name = __private_alias(name, decorated_name )
+        define_method(name) do |*a, &b|
+          Deprecations.call(decorated_name, alternative, outdated)
           send(alias_name, *a, &b)
         end
-        send(opts[:scope], opts[:name])
-        opts[:name]
+        send(scope, name)
+        name
+      end
+
+      def __private_alias(name, decorated_name)
+        alias_name = "deprecated_#{name}"
+        private_method_defined?(alias_name) and raise(ScriptError, "method is already deprecated - #{decorated_name}")
+        alias_method(alias_name, name)
+        private(alias_name)
+        alias_name
       end
     end
 
@@ -40,11 +43,11 @@ module Deprecations
       def deprecated(method_name, alternative_method_name = nil, outdated = nil)
         method_scope = __method_scope(method_name) or __not_found!(method_name)
         __define_deprecated(
-          name: method_name,
-          scope: method_scope,
-          decorated: "#{self.inspect[8..-2]}.#{method_name}",
-          alternative: __decorated(alternative_method_name),
-          outdated: outdated
+          method_name,
+          "#{self.inspect[8..-2]}.#{method_name}",
+          method_scope,
+          __decorated(alternative_method_name),
+          outdated
         )
       ensure
         $@ and $@.delete_if{ |s| s.index(__FILE__) }
@@ -69,21 +72,21 @@ module Deprecations
       def deprecated!(alternative = nil, outdated = nil)
         singleton_class.send(
           :__define_deprecated,
-          name: :new,
-          scope: :public,
-          decorated: name,
-          alternative: alternative ? "#{alternative}" : nil,
-          outdated: outdated
+          :new,
+          name,
+          :public,
+          alternative ? "#{alternative}" : nil,
+          outdated
         )
       end
 
       def deprecated(method_name, alternative_method_name = nil, outdated = nil)
         method_scope = __method_scope(method_name) and return __define_deprecated(
-          name: method_name,
-          scope: method_scope,
-          decorated: "#{name}##{method_name}",
-          alternative: __decorated(alternative_method_name),
-          outdated: outdated
+          method_name,
+          "#{name}##{method_name}",
+          method_scope,
+          __decorated(alternative_method_name),
+          outdated
         )
         singleton_class.send(:deprecated, method_name, alternative_method_name, outdated)
       ensure
