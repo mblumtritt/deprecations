@@ -1,4 +1,6 @@
 
+DeprecationError = Class.new(ScriptError)
+
 module Deprecations
   autoload(:VERSION, "#{__FILE__[/.*(?=\..+$)/]}/version")
   require_relative 'deprecations/configuration'

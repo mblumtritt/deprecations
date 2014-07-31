@@ -101,5 +101,4 @@ module Deprecations
   end
 
   infect(Module)
-  TOPLEVEL_BINDING.eval('DeprecationError = Class.new(ScriptError)')
 end
