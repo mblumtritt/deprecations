@@ -18,7 +18,7 @@ module Deprecations
       end
 
       def __define_deprecated(name, decorated_name, scope, alternative, outdated)
-        alias_name = __private_alias(name, decorated_name )
+        alias_name = __private_alias(name, decorated_name)
         define_method(name) do |*a, &b|
           Deprecations.call(decorated_name, alternative, outdated)
           send(alias_name, *a, &b)

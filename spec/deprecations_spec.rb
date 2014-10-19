@@ -61,20 +61,20 @@ module DeprecationsSamples # samples how to use
 
   # class Sample7 is deprecated
   class Sample7
-    include InitializerSample
     deprecated!
+    include InitializerSample
   end
 
   # class Sample8 is deprecated, class Sample1 should be used
   class Sample8
-    include InitializerSample
     deprecated! Sample1
+    include InitializerSample
   end
 
   # class Sample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
   class Sample9
-    include InitializerSample
     deprecated! Sample1, 'in 2.0.0'
+    include InitializerSample
   end
 
 end
