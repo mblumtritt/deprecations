@@ -23,58 +23,66 @@ module DeprecationsSamples # samples how to use
 
   # here we go:
 
-  # method Sample1#foo is deprecated
   class Sample1
     include MethodSamples
-    deprecated :foo
+    deprecated :foo # Sample1#foo is deprecated
   end
 
-  # method Sample2#foo is deprecated, Sample2#alt should be used
   class Sample2
     include MethodSamples
-    deprecated :foo, :alt
+    deprecated :foo, :alt # Sample2#foo is deprecated, Sample2#alt should be used
   end
 
-  # method Sample3#foo is deprecated and will be outdated in next version, Sample3#alt should be used
   class Sample3
     include MethodSamples
-    deprecated :foo, :alt, 'next version'
+    deprecated :foo, :alt, 'next version' # Sample3#foo is deprecated and will be outdated in next version, Sample3#alt should be used
   end
 
-  # class method Sample4::foo is deprecated
   class Sample4
     extend MethodSamples
-    deprecated :foo
+    deprecated :foo # class method Sample4::foo is deprecated
   end
 
-  # class method Sample5::foo is deprecated, Sample5::alt should be used
   class Sample5
     extend MethodSamples
-    deprecated :foo, :alt
+    deprecated :foo, :alt # class method Sample5::foo is deprecated, Sample5::alt should be used
   end
 
-  # class method Sample6::foo is deprecated and will be outdated in next version, Sample6::alt should be used
   class Sample6
     extend MethodSamples
-    deprecated :foo, :alt, 'next version'
+    deprecated :foo, :alt, 'next version' # class method Sample6::foo is deprecated and will be outdated in next version, Sample6::alt should be used
   end
 
-  # class Sample7 is deprecated
   class Sample7
-    deprecated!
+    deprecated! # class Sample7 is deprecated
     include InitializerSample
   end
 
-  # class Sample8 is deprecated, class Sample1 should be used
   class Sample8
-    deprecated! Sample1
+    deprecated! Sample1 # class Sample8 is deprecated, class Sample1 should be used
     include InitializerSample
   end
 
-  # class Sample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
   class Sample9
-    deprecated! Sample1, 'in 2.0.0'
+    deprecated! Sample1, 'in 2.0.0' # class Sample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
     include InitializerSample
+  end
+
+  module AnonymousDefined
+    AnnoSample7 = Class.new do
+      deprecated! # class AnonymousDefined::AnnoSample7 is deprecated
+      include InitializerSample
+    end
+
+    AnnoSample8 = Class.new do
+      deprecated! Sample1 # class AnonymousDefined::AnnoSample8 is deprecated, class Sample1 should be used
+      include InitializerSample
+    end
+
+    AnnoSample9 = Class.new do
+      deprecated! Sample1, 'in 2.0.0' # class AnonymousDefined::AnnoSample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
+      include InitializerSample
+    end
   end
 
 end
@@ -268,6 +276,34 @@ RSpec.describe Deprecations do
 
       context 'when an optional comment is given' do
         let(:sample){ DeprecationsSamples::Sample9 }
+
+        it_should_behave_like 'a deprecated class (warnings enabled)'
+
+        it 'informs about when it will become outdated' do
+          expect(Kernel).to receive(:warn).with(/outdated in 2.0.0/)
+          sample.new
+        end
+      end
+    end
+
+    context 'when a anonymous class is marked as deprecated' do
+      let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample7 }
+
+      it_should_behave_like 'a deprecated class (warnings enabled)'
+
+      context 'when an optional alternative class is given' do
+        let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample8 }
+
+        it_should_behave_like 'a deprecated class (warnings enabled)'
+
+        it 'suggests the alternative class' do
+          expect(Kernel).to receive(:warn).with(/\bDeprecationsSamples::Sample1\b.*\binstead\b/)
+          sample.new
+        end
+      end
+
+      context 'when an optional comment is given' do
+        let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample9 }
 
         it_should_behave_like 'a deprecated class (warnings enabled)'
 

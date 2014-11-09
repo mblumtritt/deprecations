@@ -19,11 +19,11 @@ module Deprecations
 
       def __define_deprecated(name, decorated_name, scope, alternative, outdated)
         alias_name = __private_alias(name, decorated_name)
+        send(scope, name)
         define_method(name) do |*a, &b|
           Deprecations.call(decorated_name, alternative, outdated)
           send(alias_name, *a, &b)
         end
-        send(scope, name)
         name
       end
 
@@ -44,7 +44,7 @@ module Deprecations
         method_scope = __method_scope(method_name) or __not_found!(method_name)
         __define_deprecated(
           method_name,
-          "#{self.inspect[8..-2]}.#{method_name}",
+          ->{"#{self.inspect[8..-2]}.#{method_name}"},
           method_scope,
           __decorated(alternative_method_name),
           outdated
@@ -55,7 +55,7 @@ module Deprecations
 
       def __decorated(name)
         name or return nil
-        __method_scope(name) and return "#{self.inspect[8..-2]}.#{name}"
+        __method_scope(name) and return ->{"#{self.inspect[8..-2]}.#{name}"}
         Symbol === name and __not_found!(name)
         name
       end
@@ -73,7 +73,7 @@ module Deprecations
         singleton_class.send(
           :__define_deprecated,
           :new,
-          name,
+          ->{self},
           :public,
           alternative ? "#{alternative}" : nil,
           outdated
@@ -83,7 +83,7 @@ module Deprecations
       def deprecated(method_name, alternative_method_name = nil, outdated = nil)
         method_scope = __method_scope(method_name) and return __define_deprecated(
           method_name,
-          "#{name}##{method_name}",
+          ->{"#{self}##{method_name}"},
           method_scope,
           __decorated(alternative_method_name),
           outdated
@@ -95,7 +95,7 @@ module Deprecations
 
       def __decorated(name)
         name or return nil
-        __method_scope(name) ? "#{self.name}##{name}" : singleton_class.send(:__decorated, name)
+        __method_scope(name) ? ->{"#{self}##{name}"} : singleton_class.send(:__decorated, name)
       end
     end
   end

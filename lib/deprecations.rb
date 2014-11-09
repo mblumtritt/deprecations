@@ -21,8 +21,8 @@ module Deprecations
     private
 
     def throw!(subject, alternative)
-      msg = "`#{subject}` is deprecated"
-      alternative and msg << " - use #{alternative} instead"
+      msg = "`#{value(subject)}` is deprecated"
+      alternative and msg << " - use #{value(alternative)} instead"
       ex = DeprecationError.new(msg)
       ex.set_backtrace(caller(3))
       raise(ex)
@@ -30,10 +30,14 @@ module Deprecations
 
     def warn(subject, alternative, outdated)
       location = ::Kernel.caller_locations(3,1).last and location = "#{location.path}:#{location.lineno}: "
-      msg = "#{location}[DEPRECATION] `#{subject}` is deprecated"
-      msg << (outdated ? " and will be outdated #{outdated}." : '.')
-      alternative and msg << " Please use `#{alternative}` instead."
+      msg = "#{location}[DEPRECATION] `#{value(subject)}` is deprecated"
+      msg << ((outdated = value(outdated)) ? " and will be outdated #{outdated}." : '.')
+      alternative = value(alternative) and msg << " Please use `#{alternative}` instead."
       ::Kernel.warn(msg)
+    end
+    
+    def value(arg)
+      defined?(arg.call) ? arg.call : arg
     end
 
   end
