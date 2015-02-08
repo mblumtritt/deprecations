@@ -1,3 +1,6 @@
+### deprecations 1.0.6
+- support for textual alternative of deprecated methods
+
 ### deprecations 1.0.4
 - less code, better algorithm to overload deprecated methods
 - no more private «shadow methods»

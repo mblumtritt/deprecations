@@ -18,7 +18,7 @@ module Deprecations
           decorated = Class === self ? "#{self}." : "#{self.class}#"
           Deprecations.call(
             "#{decorated}#{__method__}",
-            alternative.nil? ? nil : "#{decorated}#{alternative.name}",
+            UnboundMethod === alternative ? "#{decorated}#{alternative.name}" : alternative,
             outdated
           )
           method.bind(self).call(*a, &b)
@@ -37,7 +37,7 @@ module Deprecations
 
       def deprecated(method_name, alternative = nil, outdated = nil)
         m = __method(method_name) or __method_not_found!(method_name)
-        a = alternative.nil? ? nil : (__method(alternative) or __method_not_found!(alternative))
+        a = Symbol === alternative ? (__method(alternative) or __method_not_found!(alternative)) : alternative
         __method_deprecated!(m, a, outdated)
       end
     end
@@ -48,7 +48,7 @@ module Deprecations
 
       def deprecated(method_name, alternative = nil, outdated = nil)
         m = __method(method_name) or return singleton_class.send(:deprecated, method_name, alternative, outdated)
-        a = alternative.nil? ? nil : (__method(alternative) or __method_not_found!(alternative))
+        a = Symbol === alternative ? (__method(alternative) or __method_not_found!(alternative)) : alternative
         __method_deprecated!(m, a, outdated)
       end
 
