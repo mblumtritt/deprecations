@@ -10,7 +10,7 @@ module Deprecations
       @@cfg
     end
 
-    BEHAVIORS = [:warn, :raise, :silence].freeze
+    BEHAVIORS = [:warn, :raise, :silence]
 
     private
 
@@ -25,7 +25,7 @@ module Deprecations
         BEHAVIORS.include?(how) and return @behavior = how
         ::Kernel.raise(
           ::ArgumentError, "invalid parameter `#{how}` - have to be #{BEHAVIORS.map(&:inspect).join(' | ')}"
-        )        
+        )
       end
 
     end
