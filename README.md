@@ -46,7 +46,7 @@ class MySample
   def clean
     clear
   end
-  deprecate :clean, :clear, 'next version'
+  deprecated :clean, :clear, 'next version'
 
 end
 ```
