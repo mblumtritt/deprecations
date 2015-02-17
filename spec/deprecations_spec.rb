@@ -1,380 +1,229 @@
 require 'spec_helper'
 
-module DeprecationsSamples # samples how to use
-
-  # mixin with some methods for demonstration
-  module MethodSamples
-    def foo(*parameters)
-      block_given? ? yield(parameters) : {foo: parameters}
-    end
-
-    def alt
-      :nop
-    end
-  end
-
-  # mixin with initializer method for demonstration
-  module InitializerSample
-    attr_reader :parameters
-    def initialize(*parameters)
-      @parameters = block_given? ? yield(parameters) : {foo: parameters}
-    end
-  end
-
-  # here we go:
-
-  class Sample1
-    include MethodSamples
-    deprecated :foo # Sample1#foo is deprecated
-  end
-
-  class Sample2
-    include MethodSamples
-    deprecated :foo, :alt # Sample2#foo is deprecated, Sample2#alt should be used
-  end
-
-  class Sample3
-    include MethodSamples
-    deprecated :foo, :alt, 'next version' # Sample3#foo is deprecated and will be outdated in next version, Sample3#alt should be used
-  end
-
-  class Sample4
-    extend MethodSamples
-    deprecated :foo # class method Sample4::foo is deprecated
-  end
-
-  class Sample5
-    extend MethodSamples
-    deprecated :foo, :alt # class method Sample5::foo is deprecated, Sample5::alt should be used
-  end
-
-  class Sample6
-    extend MethodSamples
-    deprecated :foo, :alt, 'next version' # class method Sample6::foo is deprecated and will be outdated in next version, Sample6::alt should be used
-  end
-
-  class Sample7
-    deprecated! # class Sample7 is deprecated
-    include InitializerSample
-  end
-
-  class Sample8
-    deprecated! Sample1 # class Sample8 is deprecated, class Sample1 should be used
-    include InitializerSample
-  end
-
-  class Sample9
-    deprecated! Sample1, 'in 2.0.0' # class Sample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
-    include InitializerSample
-  end
-
-  module AnonymousDefined
-    AnnoSample7 = Class.new do
-      deprecated! # class AnonymousDefined::AnnoSample7 is deprecated
-      include InitializerSample
-    end
-
-    AnnoSample8 = Class.new do
-      deprecated! Sample1 # class AnonymousDefined::AnnoSample8 is deprecated, class Sample1 should be used
-      include InitializerSample
-    end
-
-    AnnoSample9 = Class.new do
-      deprecated! Sample1, 'in 2.0.0' # class AnonymousDefined::AnnoSample9 is deprecated and will be outdated in version 2.0.0, class Sample1 should be used
-      include InitializerSample
-    end
-  end
-
-end
-
-RSpec.shared_examples_for 'a transparent deprecated method' do
-  it 'forwards all parameter and returns the original method`s result' do
-    allow(Kernel).to receive(:warn)
-    expect(sample.foo(:arg1, :arg2, 42)).to eq(foo: [:arg1, :arg2, 42])
-  end
-
-  it 'forwards a given Proc to the original method' do
-    allow(Kernel).to receive(:warn)
-    expect(sample.foo(:arg1, 'test', 42){ |p| {via_block: p} }).to eq(via_block: [:arg1, 'test', 42])
-  end
-end
-
-RSpec.shared_examples_for 'a deprecated method (warnings enabled)' do
-  it_should_behave_like 'a transparent deprecated method'
-
-  it 'warns about the deprecation' do
-    expect(Kernel).to receive(:warn).once.with(/\bDeprecationsSamples::Sample\d[\.#]foo\b.*\bdeprecated\b/)
-    sample.foo
-  end
-
-  it 'points to the calling line' do
-    expect(Kernel).to receive(:warn).with(/#{__FILE__}:#{__LINE__ + 1}/)
-    sample.foo
-  end
-
-end
-
-RSpec.shared_examples_for 'a deprecated method (should throw)' do
-  it 'raises an DeprecationError' do
-    expect{ sample.foo }.to raise_error(DeprecationError, /\bDeprecationsSamples::Sample\d[\.#]foo\b.*\bdeprecated\b/)
-  end
-
-  it 'has a helpful backtrace' do
-    backtrace = nil
-    begin
-      sample.foo
-    rescue DeprecationError => err
-      backtrace = err.backtrace
-    end
-    expect(backtrace.first).to match(/#{__FILE__}:#{__LINE__ - 4}/)
-  end
-end
-
-RSpec.shared_examples_for 'a transparent deprecated class' do
-  it 'calls the original initializer with all parameters' do
-    allow(Kernel).to receive(:warn)
-    instance = sample.new(:arg1, :arg2, 42)
-    expect(instance.parameters).to eq(foo: [:arg1, :arg2, 42])
-  end
-
-  it 'forwards a given Proc to the original initializer' do
-    allow(Kernel).to receive(:warn)
-    instance = sample.new(:arg1, 'test', 42){ |p| {via_block: p} }
-    expect(instance.parameters).to eq(via_block: [:arg1, 'test', 42])
-  end
-end
-
-RSpec.shared_examples_for 'a deprecated class (warnings enabled)' do
-  it_should_behave_like 'a transparent deprecated class'
-
-  it 'warns about the deprecation' do
-    expect(Kernel).to receive(:warn).once.with(/\b#{sample}\b.*\bdeprecated\b/)
-    sample.new
-  end
-
-  it 'points to the calling line' do
-    expect(Kernel).to receive(:warn).with(/#{__FILE__}:#{__LINE__ + 1}/)
-    sample.new
-  end
-end
-
-RSpec.shared_examples_for 'a deprecated class (should throw)' do
-  it 'raises an DeprecationError' do
-    expect{ sample.new }.to raise_error(DeprecationError, /\bDeprecationsSamples::Sample\d\b.*\bdeprecated\b/)
-  end
-
-  it 'has a helpful backtrace' do
-    backtrace = nil
-    begin
-      sample.new
-    rescue DeprecationError => err
-      backtrace = err.backtrace
-    end
-    expect(backtrace.first).to match(/#{__FILE__}:#{__LINE__ - 4}/)
-  end
-end
-
 RSpec.describe Deprecations do
-  context 'when configured as silent' do
-    before :all do
-      Deprecations.configuration.behavior = :silence
+  context 'policy' do
+    before do
+      Deprecations.behavior = :silence
     end
 
-    context 'when an instance method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample1.new }
-      it_should_behave_like 'a transparent deprecated method'
+    context 'parameter forwarding' do
+
+      context 'when an instance method is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            def foo(*args)
+              {foo: args}
+            end
+            deprecated :foo
+          end
+        end
+
+        it 'forwards all parameters and returns the original method`s result' do
+          result = subject.new.foo(:arg1, :arg2, 42)
+          expect(result).to eq(foo: [:arg1, :arg2, 42])
+        end
+      end
+
+      context 'when a class method is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            def self.foo(*args)
+              {foo: args}
+            end
+            deprecated :foo
+          end
+        end
+
+        it 'forwards all parameters and returns the original method`s result' do
+          result = subject.foo(:arg1, :arg2, 42)
+          expect(result).to eq(foo: [:arg1, :arg2, 42])
+        end
+      end
+
+      context 'when a class is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            attr_reader :parameters
+            def initialize(*parameters)
+              @parameters = parameters
+            end
+            deprecated!
+          end
+        end
+
+        it 'forwards all parameters to the initializer and returns the original method`s result' do
+          expect(subject.new(:arg1, :arg2, 42).parameters).to eq([:arg1, :arg2, 42])
+        end
+      end
+
     end
 
-    context 'when a class method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample4 }
-      it_should_behave_like 'a transparent deprecated method'
+    context 'block forwarding' do
+
+      context 'when an instance method is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            def foo(arg)
+              yield(arg)
+            end
+            deprecated :foo
+          end
+        end
+
+        it 'forwards a given Proc to the original method' do
+          result = subject.new.foo(41) do |arg|
+            {my_blocks_result: arg + 1}
+          end
+          expect(result).to eq(my_blocks_result: 42)
+        end
+      end
+
+      context 'when a class method is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            def self.foo(arg)
+              yield(arg)
+            end
+            deprecated :foo
+          end
+        end
+
+        it 'forwards a given Proc to the original method' do
+          result = subject.foo(665) do |arg|
+            {my_blocks_result: arg + 1}
+          end
+          expect(result).to eq(my_blocks_result: 666)
+        end
+      end
+
+      context 'when a class is marked as deprecated' do
+        subject do
+          Class.new(BasicObject) do
+            attr_reader :value
+            def initialize(arg)
+              @value = yield(arg)
+            end
+            deprecated!
+          end
+        end
+
+        it 'forwards a given Proc to the initializer' do
+          instance = subject.new(41) do |arg|
+            {my_blocks_result: arg + 1}
+          end
+          expect(instance.value).to eq(my_blocks_result: 42)
+        end
+      end
+
     end
 
-    context 'when a class is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample7 }
-      it_should_behave_like 'a transparent deprecated class'
-    end
   end
 
-  context 'when configured to warn' do
-    before :all do
-      Deprecations.configuration.behavior = :warn
-    end
+  context 'handling' do
 
-    context 'when an instance method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample1.new }
+    context 'when a method is marked as deprecated' do
 
-      it_should_behave_like 'a deprecated method (warnings enabled)'
-
-      context 'when an optional alternative method is given' do
-        let(:sample){ DeprecationsSamples::Sample2.new }
-
-        it_should_behave_like 'a deprecated method (warnings enabled)'
-
-        it 'suggests the alternative method' do
-          expect(Kernel).to receive(:warn).with(/DeprecationsSamples::Sample2#alt.*instead/)
-          sample.foo
-        end
-      end
-
-      context 'when an optional comment is given' do
-        let(:sample){ DeprecationsSamples::Sample3.new }
-
-        it_should_behave_like 'a deprecated method (warnings enabled)'
-
-        it 'informs about when it will become outdated' do
-          expect(Kernel).to receive(:warn).with(/outdated next version/)
-          sample.foo
-        end
-      end
-    end
-
-    context 'when a class method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample4 }
-
-      it_should_behave_like 'a deprecated method (warnings enabled)'
-
-      context 'when an optional alternative method is given' do
-        let(:sample){ DeprecationsSamples::Sample5 }
-
-        it_should_behave_like 'a deprecated method (warnings enabled)'
-
-        it 'suggests the alternative method' do
-          expect(Kernel).to receive(:warn).with(/\bDeprecationsSamples::Sample5\.alt\b.*\binstead\b/)
-          sample.foo
-        end
-      end
-
-      context 'when an optional comment is given' do
-        let(:sample){ DeprecationsSamples::Sample6 }
-
-        it_should_behave_like 'a deprecated method (warnings enabled)'
-
-        it 'informs about when it will become outdated' do
-          expect(Kernel).to receive(:warn).with(/outdated next version/)
-          sample.foo
-        end
-      end
-
-    end
-
-    context 'when a class is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample7 }
-
-      it_should_behave_like 'a deprecated class (warnings enabled)'
-
-      context 'when an optional alternative class is given' do
-        let(:sample){ DeprecationsSamples::Sample8 }
-
-        it_should_behave_like 'a deprecated class (warnings enabled)'
-
-        it 'suggests the alternative class' do
-          expect(Kernel).to receive(:warn).with(/\bDeprecationsSamples::Sample1\b.*\binstead\b/)
-          sample.new
-        end
-      end
-
-      context 'when an optional comment is given' do
-        let(:sample){ DeprecationsSamples::Sample9 }
-
-        it_should_behave_like 'a deprecated class (warnings enabled)'
-
-        it 'informs about when it will become outdated' do
-          expect(Kernel).to receive(:warn).with(/outdated in 2.0.0/)
-          sample.new
-        end
-      end
-    end
-
-    context 'when a anonymous class is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample7 }
-
-      it_should_behave_like 'a deprecated class (warnings enabled)'
-
-      context 'when an optional alternative class is given' do
-        let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample8 }
-
-        it_should_behave_like 'a deprecated class (warnings enabled)'
-
-        it 'suggests the alternative class' do
-          expect(Kernel).to receive(:warn).with(/\bDeprecationsSamples::Sample1\b.*\binstead\b/)
-          sample.new
-        end
-      end
-
-      context 'when an optional comment is given' do
-        let(:sample){ DeprecationsSamples::AnonymousDefined::AnnoSample9 }
-
-        it_should_behave_like 'a deprecated class (warnings enabled)'
-
-        it 'informs about when it will become outdated' do
-          expect(Kernel).to receive(:warn).with(/outdated in 2.0.0/)
-          sample.new
-        end
-      end
-    end
-
-    context 'error cases' do
-
-      context 'when the method to mark as deprecated does not exist' do
-        it 'raises a NameError' do
-          expect do
-            Class.new do
-              deprecated :does_not_exist
+      context 'when an alternative method and a comment are present ' do
+        subject do
+          Class.new(BasicObject) do
+            def foo
             end
-          end.to raise_error(NameError, /undefined method.*does_not_exist/)
-        end
-      end
-
-      context 'when the alternative method does not exist' do
-        it 'raises a NameError' do
-          expect do
-            Class.new do
-              def foo; end
-              deprecated :foo, :not_existing_alternative
+            def bar
             end
-          end.to raise_error(NameError, /undefined method.*not_existing_alternative/)
+            deprecated :foo, :bar, 'next version'
+          end
+        end
+
+        after do
+          subject.new.foo
+        end
+
+        it 'calls the handler with correct subject' do
+          expect(Deprecations).to receive(:call).once.with("#{subject}#foo", anything, anything)
+        end
+        it 'calls the handler with correct alternative method' do
+          expect(Deprecations).to receive(:call).once.with(anything, "#{subject}#bar", anything)
+        end
+        it 'calls the handler with a comment' do
+          expect(Deprecations).to receive(:call).once.with(anything, anything, 'next version')
+        end
+      end
+
+      context 'when no alternative method and no comment are present' do
+        subject do
+          Class.new(BasicObject) do
+            def bar
+            end
+            deprecated :bar
+          end
+        end
+
+        after do
+          subject.new.bar
+        end
+
+        it 'calls handler without an alternative method' do
+          expect(Deprecations).to receive(:call).once.with(anything, nil, anything)
+        end
+        it 'calls handler without a comment' do
+          expect(Deprecations).to receive(:call).once.with(anything, anything, nil)
         end
       end
 
     end
-  end
 
-  context 'when configured to raise' do
-    before :all do
-      Deprecations.configuration.behavior = :raise
-    end
+    context 'when a class is anonymous defined' do
+      module Samples
+        AnonymousDefined = Class.new(::BasicObject) do
+          def clean; end
+          def clear; end
+          deprecated :clean, :clear
 
-    context 'when an instance method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample1.new }
-
-      it_should_behave_like 'a deprecated method (should throw)'
-
-      context 'when an optional alternative method is given' do
-        let(:sample){ DeprecationsSamples::Sample2.new }
-
-        it_should_behave_like 'a deprecated method (should throw)'
-
-        it 'suggests the alternative method' do
-          expect{ sample.foo }.to raise_error(DeprecationError, /DeprecationsSamples::Sample2#alt.*instead/)
+          def self.create; end
+          def self.make; end
+          deprecated :create, :make
         end
+      end
+
+      it 'uses correct decorated instance method names' do
+        expect(Deprecations).to receive(:call).once.with(
+          'Samples::AnonymousDefined#clean',
+          'Samples::AnonymousDefined#clear',
+          nil
+        )
+        Samples::AnonymousDefined.new.clean
+      end
+
+      it 'uses correct decorated singleton method names' do
+        expect(Deprecations).to receive(:call).once.with(
+          'Samples::AnonymousDefined.create',
+          'Samples::AnonymousDefined.make',
+          nil
+        )
+        Samples::AnonymousDefined.create
       end
     end
 
-    context 'when a class method is marked as deprecated' do
-      let(:sample){ DeprecationsSamples::Sample7 }
-
-      it_should_behave_like 'a deprecated class (should throw)'
-
-      context 'when an optional alternative class is given' do
-        let(:sample){ DeprecationsSamples::Sample8 }
-
-        it_should_behave_like 'a deprecated class (should throw)'
-
-        it 'suggests the alternative class' do
-          expect{ sample.new }.to raise_error(DeprecationError, /\bDeprecationsSamples::Sample8\b.*\binstead\b/)
+    context 'when a sub-class is used' do
+      module Samples
+        class Parent < ::BasicObject
+          def clean; end
+          def clear; end
+          deprecated :clean, :clear
         end
+
+        class Child < Parent; end
+      end
+
+      it 'uses correct decorated method names' do
+        expect(Deprecations).to receive(:call).once.with(
+          'Samples::Parent#clean',
+          'Samples::Parent#clear',
+          nil
+        )
+        Samples::Child.new.clean
       end
     end
+
   end
 end

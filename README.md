@@ -1,6 +1,6 @@
 # Deprecations
 
-This gem provides transparent declaration of deprecated methods and classes.
+This gem provides transparent declaration of deprecated methods and classes. It's easy, small, has no dependencies and no overhead.
 
 [![Code Climate](https://codeclimate.com/github/mblumtritt/deprecations.png)](https://codeclimate.com/github/mblumtritt/deprecations)
 
@@ -46,6 +46,7 @@ class MySample
   def clean
     clear
   end
+
   deprecated :clean, :clear, 'next version'
 
 end
@@ -55,27 +56,43 @@ Whenever the method `MySample#clean` is called this warning appears:
 
 > [DEPRECATION] `MySample#clean` is deprecated and will be outdated next version. Please use `MySample#clear` instead.
 
-You can change this behavior by configure the Deprecations gem:
-
-```ruby
-Deprecations.configure do |config|
-  config.behavior = :raise
-end
-```
-
-Valid behaviors are:
-
-- `:raise` will raise an `DeprecationException` when a deprecated method is called
-- `:silence` will do nothing
-- `:warn` will print a warning (default behavior)
-
-Marking a complete class as deprecated will present the deprecation warning (or exception) whenever this class is instantiated:
+Marking a complete class as deprecated will present the deprecation warning whenever this class is instantiated:
 
 ```ruby
 class MySample
   deprecated!
   
   # some more code here...
+end
+```
+
+You can change the behavior of notifying:
+
+```ruby
+Deprecations.behavior = :raise
+```
+
+There are 3 pre-defined behaviors:
+
+- `:raise` will raise an `DeprecationException` when a deprecated method is called
+- `:silence` will do nothing (ignore the deprecation)
+- `:warn` will print a warning (default behavior)
+
+Besides this you can implement your own:
+
+```ruby
+Deprecations.behavior = proc do |subject, _alternative, _outdated|
+  SuperLogger.warning "deprecated: #{subject}"
+end
+```
+
+Any object responding to `#call` will be accepted as a valid handler.
+
+Whenever you need to temporary change the standard behavior (like e.g. in your specs) you can do this like
+
+```ruby
+Deprecations.set_behavior(:silent) do
+  MyDeprecatedClass.new.do_some_magic
 end
 ```
 

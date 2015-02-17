@@ -1,3 +1,9 @@
+### deprecations 2.0.0
+- supports custom behavior
+- supports temporary behavior change
+- supports inheritance of deprecated methods
+- `Deprecations#configure` and `Deprecations#configuration` are obsolete (use `Deprecations#behavior`)
+
 ### deprecations 1.0.6
 - support for textual alternative of deprecated methods
 
