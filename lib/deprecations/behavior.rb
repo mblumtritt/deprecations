@@ -33,23 +33,27 @@ module Deprecations
       BEHAVIOR.keys.map(&:inspect).join(' | ')
     end
 
-    BEHAVIOR = {
-      silence: ->(*){},
-      raise: proc do |subject, alternative|
+    module Raise
+      def self.call(subject, alternative, _outdated)
         msg = "`#{subject}` is deprecated"
         alternative and msg << " - use #{alternative} instead"
-        ex = ::DeprecationError.new(msg)
+        ex = DeprecationError.new(msg)
         ex.set_backtrace(caller(4))
         raise(ex)
-      end,
-      warn: proc do |subject, alternative, outdated |
+      end
+    end
+
+    module Warn
+      def self.call(subject, alternative, outdated)
         location = caller_locations(4, 1).last and location = "#{location.path}:#{location.lineno}: "
         msg = "#{location}[DEPRECATION] `#{subject}` is deprecated"
         msg << (outdated ? " and will be outdated #{outdated}." : '.')
         alternative and msg << " Please use `#{alternative}` instead."
         ::Kernel.warn(msg)
       end
-    }
+    end
+
+    BEHAVIOR = {silence: ->(*){}, raise: Raise, warn: Warn}
 
   end
 end
