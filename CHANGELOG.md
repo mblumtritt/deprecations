@@ -1,3 +1,6 @@
+## deprecations 2.0.1
+- little code improvement
+
 ### deprecations 2.0.0
 - supports custom behavior
 - supports temporary behavior change
