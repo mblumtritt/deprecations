@@ -25,11 +25,11 @@ module Deprecations
 
     def as_behavior(arg)
       defined?(arg.call) ? arg : BEHAVIOR.fetch(arg) do
-        raise(ArgumentError, "invalid parameter - behavior has to be #{valid_behavior} or need to respond to `call`")
+        raise(ArgumentError, "invalid parameter - behavior has to be #{valid_behaviors} or need to respond to `call`")
       end
     end
 
-    def valid_behavior
+    def valid_behaviors
       BEHAVIOR.keys.map(&:inspect).join(' | ')
     end
 
