@@ -21,11 +21,4 @@ GemSpec = Gem::Specification.new do |spec|
   spec.has_rdoc = false # TODO!
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec', '>= 3.0.0'
-  spec.add_development_dependency 'guard'
-  spec.add_development_dependency 'guard-rspec'
-  if /darwin|mac os/i =~ RUBY_PLATFORM
-    spec.add_development_dependency 'rb-fsevent'
-    spec.add_development_dependency 'terminal-notifier'
-    spec.add_development_dependency 'terminal-notifier-guard'
-  end
 end
