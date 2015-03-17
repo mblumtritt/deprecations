@@ -12,6 +12,7 @@ GemSpec = Gem::Specification.new do |spec|
   spec.description = "This gem provides transparent declaration of deprecated methods and classes. "\
     "It's easy, small, has no dependencies and no overhead."
   spec.homepage = 'https://github.com/mblumtritt/deprecations'
+  spec.licenses = ['MIT']
   spec.date = Time.now.strftime('%Y-%m-%d')
   spec.require_paths = %w[lib]
   spec.files = %x[git ls-files].split($/)
