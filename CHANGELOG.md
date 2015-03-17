@@ -1,3 +1,6 @@
+## deprecations 2.0.2
+- add MIT license
+
 ## deprecations 2.0.1
 - little code improvement
 
