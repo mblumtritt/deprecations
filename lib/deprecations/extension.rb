@@ -15,6 +15,7 @@ module Deprecations
 
       def __method_deprecated!(method, alternative, outdated)
         defining_context = self
+        undef_method(method.name)
         define_method(method.name) do |*a, &b|
           decorated = Class === self ? "#{self}." : "#{defining_context}#"
           Deprecations.call(

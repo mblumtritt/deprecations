@@ -1,5 +1,5 @@
-## deprecations HEAD
--tbd
+## deprecations 2.0.3
+- Ruby 2.3.0 compatibility
 
 ## deprecations 2.0.2
 - add MIT license
