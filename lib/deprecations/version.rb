@@ -1,3 +1,3 @@
 module Deprecations
-  VERSION = '2.0.3pre'
+  VERSION = '2.0.3'
 end
