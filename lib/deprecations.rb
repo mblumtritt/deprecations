@@ -3,6 +3,8 @@ module Deprecations
   require_relative 'deprecations/extension'
   require_relative 'deprecations/behavior'
 
+  Error = Class.new(ScriptError)
+
   def self.call(subject, alternative, outdated)
     @behavior.call(subject, alternative, outdated)
     self
@@ -11,4 +13,4 @@ module Deprecations
   self.behavior = :warn
 end
 
-DeprecationError = Class.new(ScriptError)
+DeprecationError = Deprecations::Error

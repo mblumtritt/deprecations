@@ -60,15 +60,15 @@ RSpec.describe Deprecations do
       subject{ Deprecations.call('Bad#method', 'Bad#alternative', 'after next version') }
 
       it 'raises a Deprecations::Error' do
-        expect{ subject }.to raise_error(DeprecationError)
+        expect{ subject }.to raise_error(Deprecations::Error)
       end
 
       it 'points to the deprecated method' do
-        expect{ subject }.to raise_error(DeprecationError, /Bad#method.*deprecated/)
+        expect{ subject }.to raise_error(Deprecations::Error, /Bad#method.*deprecated/)
       end
 
       it 'suggests the alternative method' do
-        expect{ subject }.to raise_error(DeprecationError, /Bad#alternative.*instead/)
+        expect{ subject }.to raise_error(Deprecations::Error, /Bad#alternative.*instead/)
       end
     end
 

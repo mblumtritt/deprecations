@@ -1,6 +1,5 @@
 module Deprecations
   class << self
-
     def behavior
       BEHAVIOR.key(@behavior) || @behavior
     end
@@ -11,7 +10,7 @@ module Deprecations
 
     def set_behavior(behavior)
       behavior = as_behavior(behavior)
-      block_given? or raise(ArgumentError, 'block expected')
+      raise(ArgumentError, 'block expected') unless block_given?
       current_behavior = @behavior
       begin
         @behavior = behavior
@@ -24,8 +23,13 @@ module Deprecations
     private
 
     def as_behavior(arg)
-      defined?(arg.call) ? arg : BEHAVIOR.fetch(arg) do
-        raise(ArgumentError, "invalid parameter - behavior has to be #{valid_behaviors} or need to respond to `call`")
+      return arg if defined?(arg.call)
+      BEHAVIOR.fetch(arg) do
+        raise(
+          ArgumentError,
+          'invalid parameter - behavior has to be' \
+            "#{valid_behaviors} or need to respond to `call`"
+        )
       end
     end
 
@@ -36,8 +40,8 @@ module Deprecations
     module Raise
       def self.call(subject, alternative, _outdated)
         msg = "`#{subject}` is deprecated"
-        alternative and msg << " - use #{alternative} instead"
-        ex = DeprecationError.new(msg)
+        msg << " - use #{alternative} instead" if alternative
+        ex = Error.new(msg)
         ex.set_backtrace(caller(4))
         raise(ex)
       end
@@ -45,15 +49,15 @@ module Deprecations
 
     module Warn
       def self.call(subject, alternative, outdated)
-        location = caller_locations(4, 1).last and location = "#{location.path}:#{location.lineno}: "
+        location = caller_locations(4, 1)[-1]
+        location = "#{location.path}:#{location.lineno}: " if location
         msg = "#{location}[DEPRECATION] `#{subject}` is deprecated"
         msg << (outdated ? " and will be outdated #{outdated}." : '.')
-        alternative and msg << " Please use `#{alternative}` instead."
+        msg << " Please use `#{alternative}` instead." if alternative
         ::Kernel.warn(msg)
       end
     end
 
-    BEHAVIOR = {silence: ->(*){}, raise: Raise, warn: Warn}
-
+    BEHAVIOR = {silence: ->(*){ }, raise: Raise, warn: Warn}
   end
 end

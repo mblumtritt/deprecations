@@ -1,7 +1,6 @@
 module Deprecations
   class << self
     private
-
     def infect(mod)
       mod.extend(ClassMethods)
       mod.send(:include, InstanceMethods)
@@ -18,21 +17,20 @@ module Deprecations
         undef_method(method.name)
         define_method(method.name) do |*a, &b|
           decorated = Class === self ? "#{self}." : "#{defining_context}#"
-          Deprecations.call(
-            "#{decorated}#{::Kernel.__method__}",
-            UnboundMethod === alternative ? "#{decorated}#{alternative.name}" : alternative,
-            outdated
-          )
+          alternative = "#{decorated}#{alternative.name}" if UnboundMethod === alternative
+          Deprecations.call("#{decorated}#{::Kernel.__method__}", alternative, outdated)
           method.bind(self).call(*a, &b)
         end
       end
 
-      def __method_not_found!(method_name)
-        raise(NameError, "undefined method `#{method_name}` for class `#{self}`")
+      def __method_checked(method_name)
+        __method(method_name) or raise(
+          NameError, "undefined method `#{method_name}` for class `#{self}`"
+        )
       end
 
       def __method_alternative(alternative)
-        Symbol === alternative ? (__method(alternative) or __method_not_found!(alternative)) : alternative
+        Symbol === alternative ? __method_checked(alternative) : alternative
       end
     end
 
@@ -42,7 +40,7 @@ module Deprecations
 
       def deprecated(method_name, alternative = nil, outdated = nil)
         __method_deprecated!(
-          (__method(method_name) or __method_not_found!(method_name)),
+          __method_checked(method_name),
           __method_alternative(alternative),
           outdated
         )
@@ -54,7 +52,9 @@ module Deprecations
       include Helper
 
       def deprecated(method_name, alternative = nil, outdated = nil)
-        m = __method(method_name) or return singleton_class.send(:deprecated, method_name, alternative, outdated)
+        m = __method(method_name) or return singleton_class.send(
+          :deprecated, method_name, alternative, outdated
+        )
         __method_deprecated!(m, __method_alternative(alternative), outdated)
       end
 

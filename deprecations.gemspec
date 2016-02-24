@@ -15,7 +15,9 @@ GemSpec = Gem::Specification.new do |spec|
   spec.author = 'Mike Blumtritt'
   spec.email = 'mike.blumtritt@invision.de'
   spec.homepage = 'https://github.com/mblumtritt/deprecations'
-  spec.metadata = {'issue_tracker' => 'https://github.com/mblumtritt/deprecations/issues'}
+  spec.metadata = {
+    'issue_tracker' => 'https://github.com/mblumtritt/deprecations/issues'
+  }
   spec.require_paths = %w(lib)
   spec.files = %x(git ls-files).split($/).delete_if{ |f| %r{^(spec|test)/} =~ f }
   spec.test_files = %x(git ls-files).split($/).grep(%r{^(spec|test)/})

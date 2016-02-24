@@ -139,13 +139,19 @@ RSpec.describe Deprecations do
         end
 
         it 'calls the handler with correct subject' do
-          expect(Deprecations).to receive(:call).once.with("#{subject}#foo", anything, anything)
+          expect(Deprecations).to receive(:call)
+            .once
+            .with("#{subject}#foo", anything, anything)
         end
         it 'calls the handler with correct alternative method' do
-          expect(Deprecations).to receive(:call).once.with(anything, "#{subject}#bar", anything)
+          expect(Deprecations).to receive(:call)
+            .once
+            .with(anything, "#{subject}#bar", anything)
         end
         it 'calls the handler with a comment' do
-          expect(Deprecations).to receive(:call).once.with(anything, anything, 'next version')
+          expect(Deprecations).to receive(:call)
+            .once
+            .with(anything, anything, 'next version')
         end
       end
 
