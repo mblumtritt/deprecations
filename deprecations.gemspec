@@ -11,7 +11,6 @@ GemSpec = Gem::Specification.new do |spec|
     This gem provides transparent declaration of deprecated methods and classes.
     It's easy, small, has no dependencies and no overhead.
   ).join(' ')
-  spec.license = 'MIT'
   spec.author = 'Mike Blumtritt'
   spec.email = 'mike.blumtritt@invision.de'
   spec.homepage = 'https://github.com/mblumtritt/deprecations'
