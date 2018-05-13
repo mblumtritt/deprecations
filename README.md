@@ -2,8 +2,6 @@
 
 This gem provides transparent declaration of deprecated methods and classes. It's easy, small, has no dependencies and no overhead.
 
-[![Code Climate](https://codeclimate.com/github/mblumtritt/deprecations.png)](https://codeclimate.com/github/mblumtritt/deprecations)
-
 ## Installation
 
 The simplest way to install Deprecations gem is to use [Bundler](http://gembundler.com/).
@@ -61,7 +59,7 @@ Marking a complete class as deprecated will present the deprecation warning when
 ```ruby
 class MySample
   deprecated!
-  
+
   # some more code here...
 end
 ```
