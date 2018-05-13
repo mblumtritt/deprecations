@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
   spec.files = all_files - spec.test_files
 
   spec.has_rdoc = false
-  spec.extra_rdoc_files = %w(README.md CHANGELOG.md)
+  spec.extra_rdoc_files = %w(README.md)
 end
