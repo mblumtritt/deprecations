@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = %w[lib]
 
-  all_files = %x(git ls-files -z).split("\x0")
+  all_files = %x(git ls-files -z).split(0.chr)
   spec.test_files = all_files.grep(%r{^(spec|test)/})
   spec.files = all_files - spec.test_files
 
