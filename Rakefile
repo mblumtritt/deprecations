@@ -7,4 +7,6 @@ RSpec::Core::RakeTask.new(:test) do |t|
   t.verbose = Rake.application.options.trace
 end
 
-task default: :test
+task :default do
+  exec "#{$0} --task"
+end
