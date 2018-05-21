@@ -27,7 +27,7 @@ module Deprecations
       BEHAVIOR.fetch(arg) do
         raise(
           ArgumentError,
-          'invalid parameter - behavior has to be' \
+          'invalid parameter - behavior has to be ' \
             "#{valid_behaviors} or need to respond to `call`"
         )
       end
