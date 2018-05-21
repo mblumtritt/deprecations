@@ -37,19 +37,19 @@ RSpec.describe Deprecations do
       end
 
       it 'warns about the deprecation' do
-        expect(Kernel).to receive(:warn).once.with(/DEPRECATION/)
+        expect(Kernel).to receive(:warn).once.with(/.*/, uplevel: 3)
       end
 
       it 'points to the deprecated method' do
-        expect(Kernel).to receive(:warn).once.with(/Bad#method.*deprecated/)
+        expect(Kernel).to receive(:warn).once.with(/Bad#method.*deprecated/, uplevel: 3)
       end
 
       it 'suggests the alternative method' do
-        expect(Kernel).to receive(:warn).once.with(/Bad#alternative.*instead/)
+        expect(Kernel).to receive(:warn).once.with(/Bad#alternative.*instead/, uplevel: 3)
       end
 
       it 'contains information about when it will not longer supported' do
-        expect(Kernel).to receive(:warn).once.with(/outdated after next version/)
+        expect(Kernel).to receive(:warn).once.with(/outdated after next version/, uplevel: 3)
       end
     end
 
@@ -92,7 +92,6 @@ RSpec.describe Deprecations do
       it 'is possible to temporary use a different behavior' do
         expect(Kernel).to receive(:warn).once
       end
-
     end
   end
 end

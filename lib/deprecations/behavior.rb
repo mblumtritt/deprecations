@@ -42,19 +42,17 @@ module Deprecations
         msg = "`#{subject}` is deprecated"
         msg << " - use #{alternative} instead" if alternative
         ex = Error.new(msg)
-        ex.set_backtrace(caller(4))
+        ex.set_backtrace(caller(3))
         raise(ex)
       end
     end
 
     module Warn
       def self.call(subject, alternative, outdated)
-        location = caller_locations(4, 1)[-1]
-        location = "#{location.path}:#{location.lineno}: " if location
-        msg = "#{location}[DEPRECATION] `#{subject}` is deprecated"
+        msg = "`#{subject}` is deprecated"
         msg << (outdated ? " and will be outdated #{outdated}." : '.')
         msg << " Please use `#{alternative}` instead." if alternative
-        ::Kernel.warn(msg)
+        ::Kernel.warn(msg, uplevel: 3)
       end
     end
 

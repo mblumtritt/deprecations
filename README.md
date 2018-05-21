@@ -52,7 +52,7 @@ end
 
 Whenever the method `MySample#clean` is called this warning appears:
 
-> [DEPRECATION] `MySample#clean` is deprecated and will be outdated next version. Please use `MySample#clear` instead.
+> warning: `MySample#clean` is deprecated and will be outdated next version. Please use `MySample#clear` instead.
 
 Marking a complete class as deprecated will present the deprecation warning whenever this class is instantiated:
 
