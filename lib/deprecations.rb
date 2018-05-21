@@ -1,5 +1,5 @@
 module Deprecations
-  autoload(:VERSION, "#{__FILE__[/.*(?=\..+$)/]}/version")
+  require_relative 'deprecations/version'
   require_relative 'deprecations/extension'
   require_relative 'deprecations/behavior'
 
