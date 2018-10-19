@@ -8,7 +8,7 @@ module Deprecations
       @behavior = as_behavior(behavior)
     end
 
-    def set_behavior(behavior)
+    def with_behavior(behavior)
       behavior = as_behavior(behavior)
       raise(ArgumentError, 'block expected') unless block_given?
       current_behavior = @behavior
@@ -19,6 +19,8 @@ module Deprecations
         @behavior = current_behavior
       end
     end
+
+    alias set_behavior with_behavior
 
     private
 

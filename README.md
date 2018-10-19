@@ -89,7 +89,7 @@ Any object responding to `#call` will be accepted as a valid handler.
 Whenever you need to temporary change the standard behavior (like e.g. in your specs) you can do this like
 
 ```ruby
-Deprecations.set_behavior(:silent) do
+Deprecations.with_behavior(:silent) do
   MyDeprecatedClass.new.do_some_magic
 end
 ```

@@ -84,7 +84,7 @@ RSpec.describe Deprecations do
       end
 
       after do
-        Deprecations.set_behavior(:warn) do
+        Deprecations.with_behavior(:warn) do
           sample_class.new.__id__
         end
       end
