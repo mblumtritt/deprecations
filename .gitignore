@@ -1,5 +1,5 @@
 tmp/
 local/
+diea/
 pkg/
-coverage/
-Gemfile.lock
+gems.locked

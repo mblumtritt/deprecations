@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 module Deprecations
   class << self
     private
+
     def infect(mod)
       mod.extend(ClassMethods)
       mod.send(:include, InstanceMethods)
@@ -8,6 +11,7 @@ module Deprecations
 
     module Helper
       private
+
       def __method(method_name)
         instance_method(method_name) rescue nil
       end
@@ -36,6 +40,7 @@ module Deprecations
 
     module ClassMethods
       private
+
       include Helper
 
       def deprecated(method_name, alternative = nil, outdated = nil)
@@ -49,6 +54,7 @@ module Deprecations
 
     module InstanceMethods
       private
+
       include Helper
 
       def deprecated(method_name, alternative = nil, outdated = nil)
@@ -66,7 +72,6 @@ module Deprecations
         end
       end
     end
-
   end
 
   infect(Module)

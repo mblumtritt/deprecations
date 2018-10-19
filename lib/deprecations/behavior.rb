@@ -56,6 +56,6 @@ module Deprecations
       end
     end
 
-    BEHAVIOR = {silence: ->(*){ }, raise: Raise, warn: Warn}
+    BEHAVIOR = {silence: proc {}, raise: Raise, warn: Warn}.freeze
   end
 end
