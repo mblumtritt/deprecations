@@ -1,5 +1,10 @@
+require 'rake/clean'
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
+
+STDOUT.sync = STDERR.sync = true
+
+CLOBBER << 'prj'
 
 RSpec::Core::RakeTask.new(:test) do |t|
   t.pattern = ['spec/*_spec.rb', 'spec/**/*/*_spec.rb']
@@ -8,5 +13,5 @@ RSpec::Core::RakeTask.new(:test) do |t|
 end
 
 task :default do
-  exec "#{$0} --task"
+  exec "#{$PROGRAM_NAME} --task"
 end
