@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
     It's easy, small, has no dependencies and no overhead.
   DESCRIPTION
   spec.author = 'Mike Blumtritt'
-  spec.email = 'mike.blumtritt@invision.de'
+  spec.email = 'mike.blumtritt@pm.me'
   spec.homepage = 'https://github.com/mblumtritt/deprecations'
   spec.metadata = {'issue_tracker' => 'https://github.com/mblumtritt/deprecations/issues'}
 
