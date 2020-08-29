@@ -2,36 +2,29 @@ require 'spec_helper'
 
 RSpec.describe Deprecations do
   context 'behavior' do
-
     it 'is possible to configure the behavior with a pre-defined value' do
-      %i(silence raise warn).each do |behavior|
+      %i[silence raise warn].each do |behavior|
         Deprecations.behavior = behavior
         expect(Deprecations.behavior).to be(behavior)
       end
     end
 
     it 'is possible to configure a custom behavior' do
-      custom = proc do |*args|
-        FantasticLogger.log(*args)
-      end
+      custom = proc { |*args| FantasticLogger.log(*args) }
       Deprecations.behavior = custom
       expect(Deprecations.behavior).to be(custom)
     end
 
     context 'standard behavior :silence' do
-      before do
-        Deprecations.behavior = :silence
-      end
+      before { Deprecations.behavior = :silence }
 
       it 'does simply nothing' do
-        expect(subject.call(*%w(should be silent))).to be(subject)
+        expect(subject.call(*%w[should be silent])).to be(subject)
       end
     end
 
     context 'standard behavior :warn' do
-      before do
-        Deprecations.behavior = :warn
-      end
+      before { Deprecations.behavior = :warn }
       after do
         Deprecations.call('Bad#method', 'Bad#alternative', 'after next version')
       end
@@ -41,53 +34,58 @@ RSpec.describe Deprecations do
       end
 
       it 'points to the deprecated method' do
-        expect(Kernel).to receive(:warn).once.with(/Bad#method.*deprecated/, uplevel: 3)
+        expect(Kernel).to receive(:warn).once.with(
+          /Bad#method.*deprecated/,
+          uplevel: 3
+        )
       end
 
       it 'suggests the alternative method' do
-        expect(Kernel).to receive(:warn).once.with(/Bad#alternative.*instead/, uplevel: 3)
+        expect(Kernel).to receive(:warn).once.with(
+          /Bad#alternative.*instead/,
+          uplevel: 3
+        )
       end
 
       it 'contains information about when it will not longer supported' do
-        expect(Kernel).to receive(:warn).once.with(/outdated after next version/, uplevel: 3)
+        expect(Kernel).to receive(:warn).once.with(
+          /outdated after next version/,
+          uplevel: 3
+        )
       end
     end
 
     context 'standard behavior :raise' do
-      before do
-        Deprecations.behavior = :raise
+      before { Deprecations.behavior = :raise }
+      subject do
+        Deprecations.call('Bad#method', 'Bad#alternative', 'after next version')
       end
-      subject{ Deprecations.call('Bad#method', 'Bad#alternative', 'after next version') }
 
       it 'raises a Deprecations::Error' do
-        expect{ subject }.to raise_error(Deprecations::Error)
+        expect { subject }.to raise_error(Deprecations::Error)
       end
 
       it 'points to the deprecated method' do
-        expect{ subject }.to raise_error(Deprecations::Error, /Bad#method.*deprecated/)
+        expect { subject }.to raise_error(
+          Deprecations::Error,
+          /Bad#method.*deprecated/
+        )
       end
 
       it 'suggests the alternative method' do
-        expect{ subject }.to raise_error(Deprecations::Error, /Bad#alternative.*instead/)
+        expect { subject }.to raise_error(
+          Deprecations::Error,
+          /Bad#alternative.*instead/
+        )
       end
     end
 
     context 'change behavior temporary' do
-      let(:sample_class) do
-        Class.new(BasicObject) do
-          deprecated!
-        end
-      end
+      let(:sample_class) { Class.new(BasicObject) { deprecated! } }
 
-      before do
-        Deprecations.behavior = :raise
-      end
+      before { Deprecations.behavior = :raise }
 
-      after do
-        Deprecations.with_behavior(:warn) do
-          sample_class.new.__id__
-        end
-      end
+      after { Deprecations.with_behavior(:warn) { sample_class.new.__id__ } }
 
       it 'is possible to temporary use a different behavior' do
         expect(Kernel).to receive(:warn).once

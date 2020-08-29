@@ -2,32 +2,29 @@
 
 require_relative './lib/deprecations/version'
 
-Gem::Specification.new do |spec|
-  spec.name = spec.rubyforge_project = 'deprecations'
-  spec.version = Deprecations::VERSION
-  spec.summary = 'Deprecation support for your project.'
-  spec.description = <<~DESCRIPTION
+Gem::Specification.new do |gem|
+  gem.name = 'deprecations'
+  gem.version = Deprecations::VERSION
+  gem.summary = 'Deprecation support for your project.'
+  gem.description = <<~DESCRIPTION
     This gem provides transparent declaration of deprecated methods and classes.
     It's easy, small, has no dependencies and no overhead.
   DESCRIPTION
-  spec.author = 'Mike Blumtritt'
-  spec.email = 'mike.blumtritt@pm.me'
-  spec.homepage = 'https://github.com/mblumtritt/deprecations'
-  spec.metadata = {'issue_tracker' => 'https://github.com/mblumtritt/deprecations/issues'}
+  gem.author = 'Mike Blumtritt'
+  gem.homepage = 'https://github.com/mblumtritt/deprecations'
+  gem.metadata = {
+    'source_code_uri' => 'https://github.com/mblumtritt/deprecations',
+    'bug_tracker_uri' => 'https://github.com/mblumtritt/deprecations/issues'
+  }
 
-  spec.add_development_dependency 'bundler', '>= 1.10'
-  spec.add_development_dependency 'rake', '>= 10.1.1'
-  spec.add_development_dependency 'rspec', '>= 3.0.0'
+  gem.required_ruby_version = '>= 2.0.0'
 
-  spec.platform = Gem::Platform::RUBY
-  spec.required_ruby_version = '>= 2.0.0'
-  spec.required_rubygems_version = Gem::Requirement.new('>= 1.10.0')
-
-  spec.require_paths = %w[lib]
+  gem.add_development_dependency 'bundler'
+  gem.add_development_dependency 'rake'
+  gem.add_development_dependency 'rspec', '>= 3.0.0'
 
   all_files = %x(git ls-files -z).split(0.chr)
-  spec.test_files = all_files.grep(%r{^(spec|test)/})
-  spec.files = all_files - spec.test_files
-
-  spec.extra_rdoc_files = %w[README.md]
+  gem.test_files = all_files.grep(%r{^(spec|test)/})
+  gem.files = all_files - gem.test_files
+  gem.extra_rdoc_files = %w[README.md]
 end

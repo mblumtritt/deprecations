@@ -4,8 +4,8 @@ module Deprecations
       BEHAVIOR.key(@behavior) || @behavior
     end
 
-    def behavior=(behavior)
-      @behavior = as_behavior(behavior)
+    def behavior=(value)
+      @behavior = as_behavior(value)
     end
 
     def with_behavior(behavior)
@@ -58,6 +58,6 @@ module Deprecations
       end
     end
 
-    BEHAVIOR = {silence: proc {}, raise: Raise, warn: Warn}.freeze
+    BEHAVIOR = { silence: proc {}, raise: Raise, warn: Warn }.freeze
   end
 end
