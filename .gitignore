@@ -2,4 +2,4 @@ tmp/
 local/
 diea/
 pkg/
-gems.locked
+Gemfile.lock
