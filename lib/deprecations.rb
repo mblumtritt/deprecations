@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Deprecations
   require_relative 'deprecations/version'
   require_relative 'deprecations/extension'

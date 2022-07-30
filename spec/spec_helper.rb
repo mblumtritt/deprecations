@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.configure do |config|
   config.raise_errors_for_deprecations!
   config.disable_monkey_patching!
@@ -5,4 +7,5 @@ RSpec.configure do |config|
   config.expect_with(:rspec) { |c| c.syntax = :expect }
   config.mock_with(:rspec) { |c| c.syntax = :expect }
 end
+
 require 'deprecations'

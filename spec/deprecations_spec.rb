@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Deprecations do
@@ -113,8 +115,10 @@ RSpec.describe Deprecations do
       context 'when an alternative method and a comment are present ' do
         subject do
           Class.new(BasicObject) do
-            def foo; end
-            def bar; end
+            def foo
+            end
+            def bar
+            end
             deprecated :foo, :bar, 'next version'
           end
         end
@@ -147,7 +151,8 @@ RSpec.describe Deprecations do
       context 'when no alternative method and no comment are present' do
         subject do
           Class.new(BasicObject) do
-            def bar; end
+            def bar
+            end
             deprecated :bar
           end
         end
@@ -175,12 +180,16 @@ RSpec.describe Deprecations do
       module Samples
         AnonymousDefined =
           Class.new(::BasicObject) do
-            def clean; end
-            def clear; end
+            def clean
+            end
+            def clear
+            end
             deprecated :clean, :clear
 
-            def self.create; end
-            def self.make; end
+            def self.create
+            end
+            def self.make
+            end
             deprecated :create, :make
           end
       end
@@ -207,12 +216,15 @@ RSpec.describe Deprecations do
     context 'when a sub-class is used' do
       module Samples
         class Parent < ::BasicObject
-          def clean; end
-          def clear; end
+          def clean
+          end
+          def clear
+          end
           deprecated :clean, :clear
         end
 
-        class Child < Parent; end
+        class Child < Parent
+        end
       end
 
       it 'uses correct decorated method names' do

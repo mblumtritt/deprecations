@@ -13,7 +13,11 @@ module Deprecations
       private
 
       def __method(method_name)
-        instance_method(method_name) rescue nil
+        begin
+          instance_method(method_name)
+        rescue StandardError
+          nil
+        end
       end
 
       def __method_deprecated!(method, alternative, outdated)
@@ -21,16 +25,23 @@ module Deprecations
         undef_method(method.name)
         define_method(method.name) do |*a, &b|
           decorated = Class === self ? "#{self}." : "#{defining_context}#"
-          alternative = "#{decorated}#{alternative.name}" if UnboundMethod === alternative
-          Deprecations.call("#{decorated}#{::Kernel.__method__}", alternative, outdated)
+          alternative = "#{decorated}#{alternative.name}" if UnboundMethod ===
+            alternative
+          Deprecations.call(
+            "#{decorated}#{::Kernel.__method__}",
+            alternative,
+            outdated
+          )
           method.bind(self).call(*a, &b)
         end
       end
 
       def __method_checked(method_name)
-        __method(method_name) or raise(
-          NameError, "undefined method `#{method_name}` for class `#{self}`"
-        )
+        __method(method_name) or
+          raise(
+            NameError,
+            "undefined method `#{method_name}` for class `#{self}`"
+          )
       end
 
       def __method_alternative(alternative)
@@ -58,9 +69,15 @@ module Deprecations
       include Helper
 
       def deprecated(method_name, alternative = nil, outdated = nil)
-        m = __method(method_name) or return singleton_class.send(
-          :deprecated, method_name, alternative, outdated
-        )
+        m = __method(method_name) or
+          return(
+            singleton_class.send(
+              :deprecated,
+              method_name,
+              alternative,
+              outdated
+            )
+          )
         __method_deprecated!(m, __method_alternative(alternative), outdated)
       end
 
