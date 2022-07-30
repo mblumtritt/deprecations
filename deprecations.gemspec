@@ -15,17 +15,9 @@ Gem::Specification.new do |spec|
 
   spec.author = 'Mike Blumtritt'
   spec.homepage = 'https://github.com/mblumtritt/deprecations'
-  spec.metadata['source_code_uri'] =
-    'https://github.com/mblumtritt/deprecations'
-  spec.metadata['bug_tracker_uri'] =
-    'https://github.com/mblumtritt/deprecations/issues'
+  spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
 
-  spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec', '>= 3.0.0'
-
-  all_files = Dir.chdir(__dir__) { `git ls-files -z`.split(0.chr) }
-  spec.test_files = all_files.grep(%r{^(spec|test)/})
-  spec.files = all_files - spec.test_files
+  spec.files = Dir['lib/**/*']
   spec.extra_rdoc_files = %w[README.md]
 end
