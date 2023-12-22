@@ -14,6 +14,7 @@ RSpec.describe Deprecations do
     it 'is possible to configure a custom behavior' do
       custom = proc { |*args| FantasticLogger.log(*args) }
       Deprecations.behavior = custom
+
       expect(Deprecations.behavior).to be(custom)
     end
 
@@ -58,10 +59,11 @@ RSpec.describe Deprecations do
     end
 
     context 'standard behavior :raise' do
-      before { Deprecations.behavior = :raise }
       subject do
         Deprecations.call('Bad#method', 'Bad#alternative', 'after next version')
       end
+
+      before { Deprecations.behavior = :raise }
 
       it 'raises a Deprecations::Error' do
         expect { subject }.to raise_error(Deprecations::Error)
@@ -86,7 +88,6 @@ RSpec.describe Deprecations do
       let(:sample_class) { Class.new(BasicObject) { deprecated! } }
 
       before { Deprecations.behavior = :raise }
-
       after { Deprecations.with_behavior(:warn) { sample_class.new.__id__ } }
 
       it 'is possible to temporary use a different behavior' do

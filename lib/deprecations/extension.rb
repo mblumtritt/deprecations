@@ -1,93 +1,75 @@
 # frozen_string_literal: true
 
 module Deprecations
-  class << self
+  private_class_method def self.infect(mod)
+    mod.extend(ClassMethods)
+    mod.__send__(:include, InstanceMethods)
+  end
+
+  module ClassMethods
     private
 
-    def infect(mod)
-      mod.extend(ClassMethods)
-      mod.send(:include, InstanceMethods)
-    end
-
-    module Helper
-      private
-
-      def __method(method_name)
-        begin
-          instance_method(method_name)
-        rescue StandardError
-          nil
-        end
-      end
-
-      def __method_deprecated!(method, alternative, outdated)
-        defining_context = self
-        undef_method(method.name)
-        define_method(method.name) do |*a, &b|
-          decorated = Class === self ? "#{self}." : "#{defining_context}#"
-          alternative = "#{decorated}#{alternative.name}" if UnboundMethod ===
+    def deprecated(method_name, alternative = nil, outdated = nil)
+      alias_name = "__deprecated__singleton_method__#{method_name}__"
+      return if private_method_defined?(alias_name)
+      alias_method(alias_name, method_name)
+      private(alias_name)
+      alternative = instance_method(alternative) if alternative.is_a?(Symbol)
+      define_method(method_name) do |*args, **kw_args, &b|
+        Deprecations.call(
+          "#{self}.#{::Kernel.__method__}",
+          if alternative.is_a?(UnboundMethod)
+            "#{self}.#{alternative.name}"
+          else
             alternative
-          Deprecations.call(
-            "#{decorated}#{::Kernel.__method__}",
-            alternative,
-            outdated
-          )
-          method.bind(self).call(*a, &b)
-        end
-      end
-
-      def __method_checked(method_name)
-        __method(method_name) or
-          raise(
-            NameError,
-            "undefined method `#{method_name}` for class `#{self}`"
-          )
-      end
-
-      def __method_alternative(alternative)
-        Symbol === alternative ? __method_checked(alternative) : alternative
-      end
-    end
-
-    module ClassMethods
-      private
-
-      include Helper
-
-      def deprecated(method_name, alternative = nil, outdated = nil)
-        __method_deprecated!(
-          __method_checked(method_name),
-          __method_alternative(alternative),
+          end,
           outdated
         )
+        __send__(alias_name, *args, **kw_args, &b)
       end
     end
+  end
 
-    module InstanceMethods
-      private
+  module InstanceMethods
+    private
 
-      include Helper
-
-      def deprecated(method_name, alternative = nil, outdated = nil)
-        m = __method(method_name) or
-          return(
-            singleton_class.send(
-              :deprecated,
-              method_name,
-              alternative,
-              outdated
-            )
-          )
-        __method_deprecated!(m, __method_alternative(alternative), outdated)
+    def deprecated(method_name, alternative = nil, outdated = nil)
+      alias_name = "__deprecated__instance_method__#{method_name}__"
+      return if private_method_defined?(alias_name)
+      alias_method(alias_name, method_name)
+      private(alias_name)
+      alternative = instance_method(alternative) if alternative.is_a?(Symbol)
+      define_method(method_name) do |*args, **kw_args, &b|
+        pref =
+          if defined?(self.class.name)
+            self.class.name
+          else
+            Kernel.instance_method(:class).bind(self).call
+          end
+        Deprecations.call(
+          "#{pref}##{::Kernel.__method__}",
+          if alternative.is_a?(UnboundMethod)
+            "#{pref}##{alternative.name}"
+          else
+            alternative
+          end,
+          outdated
+        )
+        __send__(alias_name, *args, **kw_args, &b)
       end
+    rescue NameError
+      raise if private_method_defined?(alias_name)
+      singleton_class.__send__(:deprecated, method_name, alternative, outdated)
+    end
 
-      def deprecated!(alternative = nil, outdated = nil)
-        m = method(:new)
-        define_singleton_method(:new) do |*a, &b|
-          Deprecations.call(self, alternative, outdated)
-          m.call(*a, &b)
-        end
+    def deprecated!(alternative = nil, outdated = nil)
+      org = method(:new)
+      define_singleton_method(:new) do |*args, **kw_args, &b|
+        Deprecations.call(name, alternative, outdated)
+        org.call(*args, **kw_args, &b)
       end
+    rescue NameError
+      nil
     end
   end
 

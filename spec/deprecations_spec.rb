@@ -2,239 +2,232 @@
 
 require 'spec_helper'
 
-RSpec.describe Deprecations do
-  context 'policy' do
-    before { Deprecations.behavior = :silence }
-
-    context 'parameter forwarding' do
-      context 'when an instance method is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            def foo(*args)
-              { foo: args }
-            end
-            deprecated :foo
-          end
-        end
-
-        it 'forwards all parameters and returns the original method`s result' do
-          result = subject.new.foo(:arg1, :arg2, 42)
-          expect(result).to eq(foo: [:arg1, :arg2, 42])
-        end
-      end
-
-      context 'when a class method is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            def self.foo(*args)
-              { foo: args }
-            end
-            deprecated :foo
-          end
-        end
-
-        it 'forwards all parameters and returns the original method`s result' do
-          result = subject.foo(:arg1, :arg2, 42)
-          expect(result).to eq(foo: [:arg1, :arg2, 42])
-        end
-      end
-
-      context 'when a class is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            attr_reader :parameters
-            def initialize(*parameters)
-              @parameters = parameters
-            end
-            deprecated!
-          end
-        end
-
-        it 'forwards all parameters to the initializer and returns the original method`s result' do
-          expect(subject.new(:arg1, :arg2, 42).parameters).to eq(
-            [:arg1, :arg2, 42]
-          )
-        end
-      end
+module Examples
+  module FooMod
+    def self.bar(*args, **kw_args, &block)
+      { __method__ => { args: args, kw_args: kw_args, block: block } }
     end
 
-    context 'block forwarding' do
-      context 'when an instance method is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            def foo(arg)
-              yield(arg)
-            end
-            deprecated :foo
-          end
-        end
+    def self.alt_bar
+      nil
+    end
 
-        it 'forwards a given Proc to the original method' do
-          result = subject.new.foo(41) { |arg| { my_blocks_result: arg + 1 } }
-          expect(result).to eq(my_blocks_result: 42)
-        end
-      end
+    def self.baz(arg)
+      yield(arg) if arg
+    end
 
-      context 'when a class method is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            def self.foo(arg)
-              yield(arg)
-            end
-            deprecated :foo
-          end
-        end
+    deprecated :bar, :alt_bar, 'next version'
+    deprecated :baz
+  end
 
-        it 'forwards a given Proc to the original method' do
-          result = subject.foo(665) { |arg| { my_blocks_result: arg + 1 } }
-          expect(result).to eq(my_blocks_result: 666)
-        end
-      end
+  class Foo < BasicObject
+    def self.bar(*args, **kw_args, &block)
+      { __method__ => { args: args, kw_args: kw_args, block: block } }
+    end
 
-      context 'when a class is marked as deprecated' do
-        subject do
-          Class.new(BasicObject) do
-            attr_reader :value
-            def initialize(arg)
-              @value = yield(arg)
-            end
-            deprecated!
-          end
-        end
+    def self.alt_bar
+      nil
+    end
 
-        it 'forwards a given Proc to the initializer' do
-          instance = subject.new(41) { |arg| { my_blocks_result: arg + 1 } }
-          expect(instance.value).to eq(my_blocks_result: 42)
-        end
-      end
+    def self.baz(arg)
+      yield(arg) if arg
+    end
+
+    def foo(*args, **kw_args, &block)
+      { foo: { args: args, kw_args: kw_args, block: block } }
+    end
+
+    def alt_foo
+      nil
+    end
+
+    def foo_baz(arg)
+      yield(arg) if arg
+    end
+
+    deprecated :bar, :alt_bar, 'next version'
+    deprecated :baz
+    deprecated :foo, :alt_foo, 'next version'
+    deprecated :foo_baz
+  end
+
+  class FooChild < Foo
+  end
+
+  class Bar < BasicObject
+    deprecated!
+
+    attr_reader :args
+
+    def initialize(*args, **kw_args, &block)
+      @args = { initialize: { args: args, kw_args: kw_args, block: block } }
+    end
+  end
+end
+
+RSpec.describe Deprecations do
+  let(:block) { proc { 666 } }
+
+  before { Deprecations.behavior = :silence }
+
+  context 'parameter forwarding' do
+    it 'forwards parameters of class methods of modules' do
+      result = Examples::FooMod.bar(:arg1, 42, half: 21, &block)
+      expect(result).to eq(
+        bar: {
+          args: [:arg1, 42],
+          kw_args: {
+            half: 21
+          },
+          block: block
+        }
+      )
+    end
+
+    it 'forwards parameters of class methods' do
+      result = Examples::Foo.bar(:arg1, 42, half: 21, &block)
+      expect(result).to eq(
+        bar: {
+          args: [:arg1, 42],
+          kw_args: {
+            half: 21
+          },
+          block: block
+        }
+      )
+    end
+
+    it 'forwards parameters of instance methods' do
+      result = Examples::Foo.new.foo(:arg1, 42, half: 21, &block)
+      expect(result).to eq(
+        foo: {
+          args: [:arg1, 42],
+          kw_args: {
+            half: 21
+          },
+          block: block
+        }
+      )
+    end
+
+    it 'forwards parameters of initialize' do
+      result = Examples::Bar.new(:arg1, 42, half: 21, &block)
+      expect(result.args).to eq(
+        initialize: {
+          args: [:arg1, 42],
+          kw_args: {
+            half: 21
+          },
+          block: block
+        }
+      )
     end
   end
 
-  context 'handling' do
-    context 'when a method is marked as deprecated' do
-      context 'when an alternative method and a comment are present ' do
-        subject do
-          Class.new(BasicObject) do
-            def foo
-            end
-            def bar
-            end
-            deprecated :foo, :bar, 'next version'
-          end
-        end
+  context 'reporting' do
+    it 'reports when class methods of modules are called' do
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooMod.bar',
+        'Examples::FooMod.alt_bar',
+        'next version'
+      )
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooMod.baz',
+        nil,
+        nil
+      )
+      Examples::FooMod.bar
+      Examples::FooMod.baz(false)
+    end
 
-        after { subject.new.foo }
+    it 'reports when class methods are called' do
+      expect(Deprecations).to receive(:call).with(
+        'Examples::Foo.bar',
+        'Examples::Foo.alt_bar',
+        'next version'
+      )
+      expect(Deprecations).to receive(:call).with('Examples::Foo.baz', nil, nil)
+      Examples::Foo.bar
+      Examples::Foo.baz(false)
+    end
 
-        it 'calls the handler with correct subject' do
-          expect(Deprecations).to receive(:call).once.with(
-            "#{subject}#foo",
-            anything,
-            anything
-          )
-        end
-        it 'calls the handler with correct alternative method' do
-          expect(Deprecations).to receive(:call).once.with(
-            anything,
-            "#{subject}#bar",
-            anything
-          )
-        end
-        it 'calls the handler with a comment' do
-          expect(Deprecations).to receive(:call).once.with(
-            anything,
-            anything,
-            'next version'
-          )
-        end
-      end
+    it 'reports when instance methods are called' do
+      expect(Deprecations).to receive(:call).with(
+        'Examples::Foo#foo',
+        'Examples::Foo#alt_foo',
+        'next version'
+      )
+      expect(Deprecations).to receive(:call).with(
+        'Examples::Foo#foo_baz',
+        nil,
+        nil
+      )
+      Examples::Foo.new.foo
+      Examples::Foo.new.foo_baz(false)
+    end
 
-      context 'when no alternative method and no comment are present' do
-        subject do
-          Class.new(BasicObject) do
-            def bar
-            end
-            deprecated :bar
-          end
-        end
+    it 'reports when class methods of a child class are called' do
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooChild.bar',
+        'Examples::FooChild.alt_bar',
+        'next version'
+      )
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooChild.baz',
+        nil,
+        nil
+      )
+      Examples::FooChild.bar
+      Examples::FooChild.baz(false)
+    end
 
-        after { subject.new.bar }
+    it 'reports when instance methods of a child class are called' do
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooChild#foo',
+        'Examples::FooChild#alt_foo',
+        'next version'
+      )
+      expect(Deprecations).to receive(:call).with(
+        'Examples::FooChild#foo_baz',
+        nil,
+        nil
+      )
+      Examples::FooChild.new.foo
+      Examples::FooChild.new.foo_baz(false)
+    end
 
-        it 'calls handler without an alternative method' do
-          expect(Deprecations).to receive(:call).once.with(
-            anything,
-            nil,
-            anything
-          )
-        end
-        it 'calls handler without a comment' do
-          expect(Deprecations).to receive(:call).once.with(
-            anything,
-            anything,
+    it 'reports when initialize is called' do
+      expect(Deprecations).to receive(:call).with('Examples::Bar', nil, nil)
+      Examples::Bar.new
+    end
+  end
+
+  context 'error handling' do
+    it 'raises a NameError for invalid deprecated method name' do
+      expect { Class.new { deprecated :some } }.to raise_error(
+        NameError,
+        /some/
+      )
+    end
+
+    it 'raises a NameError for invalid alternative method name' do
+      expect do
+        Class.new do
+          def foo
             nil
-          )
+          end
+
+          deprecated :foo, :some
         end
-      end
+      end.to raise_error(NameError, /some/)
     end
 
-    context 'when a class is anonymous defined' do
-      module Samples
-        AnonymousDefined =
-          Class.new(::BasicObject) do
-            def clean
-            end
-            def clear
-            end
-            deprecated :clean, :clear
-
-            def self.create
-            end
-            def self.make
-            end
-            deprecated :create, :make
-          end
-      end
-
-      it 'uses correct decorated instance method names' do
-        expect(Deprecations).to receive(:call).once.with(
-          'Samples::AnonymousDefined#clean',
-          'Samples::AnonymousDefined#clear',
-          nil
-        )
-        Samples::AnonymousDefined.new.clean
-      end
-
-      it 'uses correct decorated singleton method names' do
-        expect(Deprecations).to receive(:call).once.with(
-          'Samples::AnonymousDefined.create',
-          'Samples::AnonymousDefined.make',
-          nil
-        )
-        Samples::AnonymousDefined.create
-      end
+    it 'does not deprecate already deprecated class method' do
+      expect(Examples::FooMod.__send__(:deprecated, :bar)).to be_nil
     end
 
-    context 'when a sub-class is used' do
-      module Samples
-        class Parent < ::BasicObject
-          def clean
-          end
-          def clear
-          end
-          deprecated :clean, :clear
-        end
-
-        class Child < Parent
-        end
-      end
-
-      it 'uses correct decorated method names' do
-        expect(Deprecations).to receive(:call).once.with(
-          'Samples::Parent#clean',
-          'Samples::Parent#clear',
-          nil
-        )
-        Samples::Child.new.clean
-      end
+    it 'does not deprecate already deprecated method' do
+      expect(Examples::Foo.__send__(:deprecated, :foo)).to be_nil
     end
   end
 end

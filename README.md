@@ -14,13 +14,13 @@ gem 'deprecations'
 
 and install it by running Bundler:
 
-```bash
-$ bundle
+```shell
+$ bundle add deprecations
 ```
 
 To install the gem globally use:
 
-```bash
+```shell
 $ gem install deprecations
 ```
 
@@ -36,7 +36,6 @@ you can specify which methods and classes are deprecated. To mark a method as de
 
 ```ruby
 class MySample
-
   def clear
     # something here
   end
@@ -46,7 +45,6 @@ class MySample
   end
 
   deprecated :clean, :clear, 'next version'
-
 end
 ```
 
@@ -79,9 +77,10 @@ There are 3 pre-defined behaviors:
 Besides this you can implement your own:
 
 ```ruby
-Deprecations.behavior = proc do |subject, _alternative, _outdated|
-  SuperLogger.warning "deprecated: #{subject}"
-end
+Deprecations.behavior =
+  proc do |subject, _alternative, _outdated|
+    SuperLogger.warning "deprecated: #{subject}"
+  end
 ```
 
 Any object responding to `#call` will be accepted as a valid handler.
@@ -89,9 +88,7 @@ Any object responding to `#call` will be accepted as a valid handler.
 Whenever you need to temporary change the standard behavior (like e.g. in your specs) you can do this like
 
 ```ruby
-Deprecations.with_behavior(:silent) do
-  MyDeprecatedClass.new.do_some_magic
-end
+Deprecations.with_behavior(:silent) { MyDeprecatedClass.new.do_some_magic }
 ```
 
 Please have a look at the [specs](https://github.com/mblumtritt/deprecations/blob/master/spec/deprecations_spec.rb) for detailed information and more samples.
