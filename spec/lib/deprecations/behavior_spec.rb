@@ -18,7 +18,7 @@ RSpec.describe Deprecations do
       expect(Deprecations.behavior).to be(custom)
     end
 
-    context 'standard behavior :silence' do
+    context 'when behavior is :silence' do
       before { Deprecations.behavior = :silence }
 
       it 'does simply nothing' do
@@ -26,7 +26,7 @@ RSpec.describe Deprecations do
       end
     end
 
-    context 'standard behavior :warn' do
+    context 'when behavior is :warn' do
       before { Deprecations.behavior = :warn }
       after do
         Deprecations.call('Bad#method', 'Bad#alternative', 'after next version')
@@ -58,7 +58,7 @@ RSpec.describe Deprecations do
       end
     end
 
-    context 'standard behavior :raise' do
+    context 'when behavior is :raise' do
       subject do
         Deprecations.call('Bad#method', 'Bad#alternative', 'after next version')
       end
@@ -84,7 +84,7 @@ RSpec.describe Deprecations do
       end
     end
 
-    context 'change behavior temporary' do
+    context 'when behavior is temporary changed' do
       let(:sample_class) { Class.new(BasicObject) { deprecated! } }
 
       before { Deprecations.behavior = :raise }
