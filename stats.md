@@ -1,7 +1,6 @@
 # Gem/Repo Statistics
 
 ![version](https://img.shields.io/gem/v/deprecations)
-
 ![downloads](https://img.shields.io/gem/dt/deprecations)
 ![downloads](https://img.shields.io/gem/dtv/deprecations)
 
