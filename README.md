@@ -70,9 +70,10 @@ Deprecations.behavior = :raise
 
 There are 3 pre-defined behaviors:
 
-- `:raise` will raise an `DeprecationException` when a deprecated method is called
+- `:raise` will raise an `Deprecations::Exception` when a deprecated method is called
 - `:silence` will do nothing (ignore the deprecation)
 - `:warn` will print a warning (default behavior)
+- `:deprecated` will print a warning when Ruby's warning category 'deprecated' is enabled
 
 Besides this you can implement your own:
 
