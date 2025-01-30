@@ -40,11 +40,9 @@ module Deprecations
       end
     end
 
-    def name_error(exc, raise_again = true)
-      exc.set_backtrace(
-        exc.backtrace_locations.drop_while { _1.path.start_with?(__FILE__) }
-      )
-      raise if raise_again
+    def name_error(exc)
+      exc.set_backtrace(exc.backtrace.drop_while { _1.start_with?(__FILE__) })
+      exc
     end
 
     module Raise
@@ -96,14 +94,14 @@ module Deprecations
         begin
           alias_method(alias_name, name)
         rescue NameError => e
-          ::Deprecations.__send__(:name_error, e)
+          raise ::Deprecations.__send__(:name_error, e)
         end
         private(alias_name)
         if alt.is_a?(Symbol)
           begin
             alt = instance_method(alt)
           rescue NameError => e
-            ::Deprecations.__send__(:name_error, e)
+            raise ::Deprecations.__send__(:name_error, e)
           end
         end
         define_method(name) do |*args, **kw_args, &b|
@@ -126,7 +124,7 @@ module Deprecations
         begin
           alias_method(alias_name, name)
         rescue NameError => e
-          ::Deprecations.__send__(:name_error, e, false)
+          ::Deprecations.__send__(:name_error, e)
           return singleton_class.__send__(:deprecated, name, alt, outdated)
         end
         private(alias_name)
@@ -134,7 +132,7 @@ module Deprecations
           begin
             alt = instance_method(alt)
           rescue NameError => e
-            ::Deprecations.__send__(:name_error, e)
+            raise ::Deprecations.__send__(:name_error, e)
           end
         end
         define_method(name) do |*args, **kw_args, &b|
