@@ -3,12 +3,12 @@
 source 'https://rubygems.org'
 
 group :development, :test do
-  gem 'bundler'
-  gem 'rake'
+  gem 'bundler', require: false
+  gem 'rake', require: false
 end
 
 group :test do
-  gem 'rspec', '>= 3.0.0'
+  gem 'rspec', require: false
 end
 
 gemspec
