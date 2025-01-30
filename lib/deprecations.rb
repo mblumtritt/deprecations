@@ -4,22 +4,19 @@ module Deprecations
   Error = Class.new(ScriptError)
 
   class << self
-    def behavior
-      BEHAVIOR.key(@behavior) || @behavior
-    end
+    def behavior = BEHAVIOR.key(@behavior) || @behavior
 
     def behavior=(value)
       @behavior = as_behavior(value)
     end
 
     def with_behavior(behavior)
-      behavior = as_behavior(behavior)
-      raise(ArgumentError, 'block expected') unless block_given?
       current_behavior = @behavior
-      @behavior = behavior
+      @behavior = as_behavior(behavior)
+      raise(ArgumentError, 'block expected') unless block_given?
       yield
     ensure
-      @behavior = current_behavior if current_behavior
+      @behavior = current_behavior
     end
 
     alias set_behavior with_behavior
@@ -43,6 +40,13 @@ module Deprecations
       end
     end
 
+    def name_error(exc, raise_again = true)
+      exc.set_backtrace(
+        exc.backtrace_locations.drop_while { _1.path.start_with?(__FILE__) }
+      )
+      raise if raise_again
+    end
+
     module Raise
       def self.call(subject, alternative, _outdated)
         error =
@@ -56,18 +60,32 @@ module Deprecations
       end
     end
 
-    module Warn
-      def self.call(subject, alternative, outdated)
-        ::Kernel.warn(
-          "`#{subject}` is deprecated#{
-            outdated ? " and will be outdated #{outdated}." : '.'
-          }#{" Please use `#{alternative}` instead." if alternative}",
-          uplevel: 3
-        )
+    module WarnMessage
+      def message(subject, alternative, outdated)
+        "`#{subject}` is deprecated#{
+          outdated ? " and will be outdated #{outdated}." : '.'
+        }#{" Please use `#{alternative}` instead." if alternative}"
       end
     end
 
-    BEHAVIOR = { silence: proc {}, raise: Raise, warn: Warn }.freeze
+    module Warn
+      extend WarnMessage
+      def self.call(*args) = ::Kernel.warn(message(*args), uplevel: 3)
+    end
+
+    module Deprecated
+      extend WarnMessage
+      def self.call(*args)
+        ::Kernel.warn(message(*args), uplevel: 3, category: :deprecated)
+      end
+    end
+
+    BEHAVIOR = {
+      silence: proc {},
+      raise: Raise,
+      warn: Warn,
+      deprecated: Deprecated
+    }.freeze
 
     module ClassMethods
       private
@@ -75,11 +93,21 @@ module Deprecations
       def deprecated(name, alt = nil, outdated = nil)
         alias_name = "__deprecated__singleton_method__#{name}__"
         return if private_method_defined?(alias_name)
-        alias_method(alias_name, name)
+        begin
+          alias_method(alias_name, name)
+        rescue NameError => e
+          ::Deprecations.__send__(:name_error, e)
+        end
         private(alias_name)
-        alt = instance_method(alt) if alt.is_a?(Symbol)
+        if alt.is_a?(Symbol)
+          begin
+            alt = instance_method(alt)
+          rescue NameError => e
+            ::Deprecations.__send__(:name_error, e)
+          end
+        end
         define_method(name) do |*args, **kw_args, &b|
-          Deprecations.call(
+          ::Deprecations.call(
             "#{self}.#{::Kernel.__method__}",
             (alt.is_a?(UnboundMethod) ? "#{self}.#{alt.name}" : alt),
             outdated
@@ -95,36 +123,42 @@ module Deprecations
       def deprecated(name, alt = nil, outdated = nil)
         alias_name = "__deprecated__instance_method__#{name}__"
         return if private_method_defined?(alias_name)
-        alias_method(alias_name, name)
+        begin
+          alias_method(alias_name, name)
+        rescue NameError => e
+          ::Deprecations.__send__(:name_error, e, false)
+          return singleton_class.__send__(:deprecated, name, alt, outdated)
+        end
         private(alias_name)
-        alt = instance_method(alt) if alt.is_a?(Symbol)
+        if alt.is_a?(Symbol)
+          begin
+            alt = instance_method(alt)
+          rescue NameError => e
+            ::Deprecations.__send__(:name_error, e)
+          end
+        end
         define_method(name) do |*args, **kw_args, &b|
           pref =
             if defined?(self.class.name)
               self.class.name
             else
-              Kernel.instance_method(:class).bind(self).call
+              ::Kernel.instance_method(:class).bind(self).call
             end
-          Deprecations.call(
+          ::Deprecations.call(
             "#{pref}##{::Kernel.__method__}",
             (alt.is_a?(UnboundMethod) ? "#{pref}##{alt.name}" : alt),
             outdated
           )
           __send__(alias_name, *args, **kw_args, &b)
         end
-      rescue NameError
-        raise if private_method_defined?(alias_name)
-        singleton_class.__send__(:deprecated, name, alt, outdated)
       end
 
       def deprecated!(alternative = nil, outdated = nil)
         org = method(:new)
         define_singleton_method(:new) do |*args, **kw_args, &b|
-          Deprecations.call(name, alternative, outdated)
+          ::Deprecations.call(name, alternative, outdated)
           org.call(*args, **kw_args, &b)
         end
-      rescue NameError
-        nil
       end
     end
 
@@ -134,5 +168,3 @@ module Deprecations
 
   self.behavior = :warn
 end
-
-DeprecationError = Deprecations::Error
