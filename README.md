@@ -1,3 +1,8 @@
+
+> [!IMPORTANT]  
+> I archived this repo here and moved it to [Codeberg](https://codeberg.org/mblumtritt/deprecations) for several reasons.
+> <br/>🛠️ It's still active there!
+
 # Deprecations
 
 This gem provides transparent declaration of deprecated methods and classes. It's easy, small, has no dependencies and no overhead.
