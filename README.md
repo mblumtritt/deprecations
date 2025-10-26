@@ -8,7 +8,7 @@
 This gem provides transparent declaration of deprecated methods and classes. It's easy, small, has no dependencies and no overhead.
 
 - Gem: [rubygems.org](https://rubygems.org/gems/deprecations)
-- Source: [github.com](https://github.com/mblumtritt/deprecations)
+- Source: [codeberg.org](https://codeberg.org/mblumtritt/deprecations)
 
 ## Installation
 
